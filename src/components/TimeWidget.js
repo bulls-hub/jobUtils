@@ -12,7 +12,7 @@ function TimeWidget() {
   }, []);
 
   return (
-    <Card>
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <CardContent>
         <Typography variant="h2" component="div" align="center">
           {time.toLocaleTimeString()}

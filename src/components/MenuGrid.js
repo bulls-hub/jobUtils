@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Card, CardContent, Typography, CardActionArea } from '@mui/material';
+import { Grid, Card, Typography, CardActionArea } from '@mui/material';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import NoteIcon from '@mui/icons-material/Note';
 import TransformIcon from '@mui/icons-material/Transform';
@@ -19,14 +19,14 @@ function MenuGrid() {
     <Grid container spacing={2}>
       {menus.map((menu) => (
         <Grid item xs={12} sm={4} key={menu.id}>
-          <Card>
-            <CardActionArea onClick={() => handleClick(menu.id)}>
-              <CardContent sx={{ textAlign: 'center' }}>
-                {menu.icon}
-                <Typography variant="h6" component="div" sx={{ mt: 1 }}>
-                  {menu.title}
-                </Typography>
-              </CardContent>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column', '&:hover .MuiSvgIcon-root': { transform: 'scale(1.1)', color: 'primary.main' } }}>
+            <CardActionArea onClick={() => handleClick(menu.id)} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+              <div style={{ transition: 'transform 0.3s ease-in-out' }}>
+                {React.cloneElement(menu.icon, { color: 'action', fontSize: "large", sx: { fontSize: 60, mb: 2 } })}
+              </div>
+              <Typography variant="h6" component="div" align="center" fontWeight="bold">
+                {menu.title}
+              </Typography>
             </CardActionArea>
           </Card>
         </Grid>
