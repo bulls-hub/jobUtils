@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions,
-    Button, TextField, List, ListItem, ListItemText,
+    Button, TextField,
     IconButton, Alert, Box, CircularProgress, Typography,
     ToggleButton, ToggleButtonGroup, Grid
 } from '@mui/material';
@@ -37,6 +37,7 @@ export default function DDayManagerModal({ open, onClose, session, onUpdate }) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [editId, setEditId] = useState(null);
+    const [filter, setFilter] = useState('all');
 
     // 모달이 열릴 때 이벤트 목록 불러오기
     useEffect(() => {
@@ -215,7 +216,27 @@ export default function DDayManagerModal({ open, onClose, session, onUpdate }) {
                     </Grid>
                 </Box>
 
-                <Typography variant="h6" sx={{ mb: 2 }}>등록된 이벤트 목록</Typography>
+                {/* 등록 필터 및 헤더 */}
+                {/* 등록 필터 및 헤더 */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">등록된 이벤트 목록</Typography>
+                    {events.length > 0 && (
+                        <ToggleButtonGroup
+                            value={filter}
+                            exclusive
+                            onChange={(e, newFilter) => newFilter && setFilter(newFilter)}
+                            size="small"
+                            aria-label="event filter"
+                        >
+                            <ToggleButton value="all">전체</ToggleButton>
+                            {ICONS.filter(icon => events.some(e => (e.icon || 'event') === icon.value)).map((option) => (
+                                <ToggleButton key={option.value} value={option.value} aria-label={option.value}>
+                                    {option.icon}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
+                    )}
+                </Box>
 
                 {/* 목록 영역 - 그리드 스타일 */}
                 {loading && events.length === 0 ? (
@@ -224,14 +245,14 @@ export default function DDayManagerModal({ open, onClose, session, onUpdate }) {
                     </Box>
                 ) : (
                     <Grid container spacing={2}>
-                        {events.length === 0 ? (
+                        {(filter === 'all' ? events : events.filter(e => (e.icon || 'event') === filter)).length === 0 ? (
                             <Grid item xs={12}>
                                 <Typography variant="body1" color="text.secondary" align="center" sx={{ py: 5 }}>
-                                    등록된 이벤트가 없습니다.
+                                    {filter === 'all' ? '등록된 이벤트가 없습니다.' : '해당 조건의 이벤트가 없습니다.'}
                                 </Typography>
                             </Grid>
                         ) : (
-                            events.map((item) => (
+                            (filter === 'all' ? events : events.filter(e => (e.icon || 'event') === filter)).map((item) => (
                                 <Grid item xs={12} sm={6} key={item.id}>
                                     <Box
                                         sx={{
