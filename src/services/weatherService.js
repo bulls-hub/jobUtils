@@ -30,34 +30,43 @@ const formatWeatherData = (currentData, forecastData) => {
         rainChance: 0 // 현재 API에서는 강수확률을 직접 주지 않음 (Forecast에서 가져오거나 pop 사용 필요)
     };
 
-    // 예보 데이터 처리 (매일 12:00 기준 or 하루 평균)
-    // forecastData.list는 3시간 간격. 다음 4일의 데이터를 추출해야 함.
-    const dailyForecast = [];
-    const processedDates = new Set();
-    const today = new Date().getDate();
+    // 예보 데이터 처리 (일별 최고/최저 기온 및 최대 강수확률)
+    const dailyForecastMap = {};
+    const todayNum = new Date().getDate();
 
-    for (const item of forecastData.list) {
+    forecastData.list.forEach(item => {
         const date = new Date(item.dt * 1000);
+        // 로컬 날짜 기준으로 키 생성 (예: '2026-01-05')
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
         const dateNum = date.getDate();
 
-        // 오늘은 제외하고, 이미 처리한 날짜 제외 (하루 1개씩)
-        // 12시 근처의 데이터를 쓰거나, 첫번째 데이터를 사용
-        if (dateNum !== today && !processedDates.has(dateNum)) {
-            if (dailyForecast.length >= 4) break;
+        // 오늘 데이터는 제외
+        if (dateNum === todayNum) return;
 
-            // 간단하게 정오(12시) 데이터 혹은 가능한 첫 데이터를 사용
-            // 여기서는 3시간 간격이므로 그냥 날짜가 바뀌면 추가하는 식으로 단순화 구현
-            // 좀 더 정확하려면 12:00 데이터를 찾거나 해야 함
-            if (date.getHours() >= 12 || !processedDates.has(dateNum)) {
-                dailyForecast.push({
-                    day: getDayName(date),
-                    temp: Math.round(item.main.temp),
-                    condition: getWeatherCondition(item.weather[0].id)
-                });
-                processedDates.add(dateNum);
-            }
+        if (!dailyForecastMap[dateKey]) {
+            dailyForecastMap[dateKey] = {
+                day: getDayName(date),
+                temps: [],
+                conditions: [],
+                pops: []
+            };
         }
-    }
+
+        dailyForecastMap[dateKey].temps.push(item.main.temp);
+        dailyForecastMap[dateKey].conditions.push(item.weather[0].id);
+        dailyForecastMap[dateKey].pops.push(item.pop || 0);
+    });
+
+    const dailyForecast = Object.values(dailyForecastMap).map(dayData => ({
+        day: dayData.day,
+        tempMin: Math.round(Math.min(...dayData.temps)),
+        tempMax: Math.round(Math.max(...dayData.temps)),
+        condition: getWeatherCondition(
+            // 해당 날짜의 가장 많이 나타난 기상 상태 혹은 대표 상태 (여기서는 중간 시간대 데이터 사용)
+            dayData.conditions[Math.floor(dayData.conditions.length / 2)]
+        ),
+        pop: Math.round(Math.max(...dayData.pops) * 100) // 최대 강수확률 %
+    })).slice(0, 4); // 4일치만 유지
 
     return { current, forecast: dailyForecast };
 };
@@ -75,6 +84,29 @@ const getDayName = (date) => {
 
     // 정확한 날짜 차이 계산이 필요하지만(자정 기준), 여기서는 생략하고 요일 리턴
     return days[date.getDay()];
+};
+
+/**
+ * 도시 이름으로 좌표 검색 (Geocoding)
+ */
+export const searchLocations = async (query) => {
+    if (!query || !API_KEY) return [];
+    try {
+        const response = await fetch(
+            `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${API_KEY}`
+        );
+        const data = await response.json();
+        return data.map(item => ({
+            name: item.local_names?.ko || item.name,
+            state: item.state,
+            country: item.country,
+            lat: item.lat,
+            lon: item.lon
+        }));
+    } catch (error) {
+        console.error('Geocoding error:', error);
+        return [];
+    }
 };
 
 export const fetchWeather = async (lat, lon) => {

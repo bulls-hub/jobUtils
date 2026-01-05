@@ -21,7 +21,9 @@ export default function AuthWidget({ session }) {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: process.env.REACT_APP_AUTH_REDIRECT_URI || window.location.origin
+                    redirectTo: window.location.hostname === 'localhost' 
+                        ? window.location.origin 
+                        : (process.env.REACT_APP_AUTH_REDIRECT_URI || window.location.origin)
                 }
             });
             if (error) throw error;

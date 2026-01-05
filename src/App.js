@@ -3,6 +3,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -17,6 +18,8 @@ import WeatherWidget from './components/WeatherWidget';
 import DDayWidget from './components/DDayWidget';
 import MenuGrid from './components/MenuGrid';
 import AuthWidget from './components/AuthWidget';
+import StockWidget from './components/StockWidget';
+import CoinWidget from './components/CoinWidget';
 import getTheme from './theme';
 import { supabase } from './lib/supabaseClient';
 
@@ -109,11 +112,21 @@ function App() {
         <Grid container spacing={4} alignItems="flex-start">
           <Grid item xs={12} md={4}>
             <TimeWidget />
+            <Box sx={{ mt: 2 }}>
+              <WeatherWidget />
+            </Box>
           </Grid>
           <Grid item xs={12} md={8}>
             <Grid container spacing={4}>
               <Grid item xs={12}>
-                <WeatherWidget />
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <StockWidget />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <CoinWidget />
+                  </Grid>
+                </Grid>
               </Grid>
               <Grid item xs={12}>
                 <DDayWidget session={session} />
