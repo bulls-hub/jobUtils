@@ -80,10 +80,15 @@ function CoinWidget() {
             // 1. 현재가 정보 (한글 이름 맵 전달)
             const tickers = await fetchCoinData(currentMarkets, names);
 
-            // 2. 차트 정보 병렬 로드
+            // 2. 차트 정보 로드 (에러 핸들링 강화)
             const coinsWithCharts = await Promise.all(tickers.map(async (coin) => {
-                const chart = await fetchCoinChart(coin.market);
-                return { ...coin, chart };
+                try {
+                    const chart = await fetchCoinChart(coin.market);
+                    return { ...coin, chart: chart || [] };
+                } catch (err) {
+                    console.error(`Chart load failed for ${coin.market}:`, err);
+                    return { ...coin, chart: [] };
+                }
             }));
 
             setCoins(coinsWithCharts);

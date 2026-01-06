@@ -1,0 +1,20 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/upbit/:path*",
+            "destination": "https://api.upbit.com/:path*"
+        },
+        {
+            "source": "/api/naver-m/:path*",
+            "destination": "/api/naver-m?path=:path*"
+        },
+        {
+            "source": "/api/naver-stock/:path*",
+            "destination": "/api/naver-stock?path=:path*"
+        },
+        {
+            "source": "/api/naver-api/:path*",
+            "destination": "/api/naver-api?path=:path*"
+        }
+    ]
+}

@@ -1,5 +1,5 @@
 
-const BASE_URL = 'https://api.upbit.com/v1';
+const BASE_URL = '/api/upbit/v1';
 
 /**
  * 코인 현재가 및 정보 가져오기
@@ -53,9 +53,14 @@ export const fetchCoinChart = async (market) => {
         // 최근 30일(일봉) 데이터
         const response = await fetch(`${BASE_URL}/candles/days?market=${market}&count=30`);
         const data = await response.json();
+        // 데이터가 배열인지 확인 (에러 응답 시 객체 등이 올 수 있음)
+        if (!Array.isArray(data)) {
+            console.error(`Unexpected response for ${market}:`, data);
+            return [];
+        }
 
         // 날짜순(과거->현재)으로 정렬하여 종가 리스트 반환
-        return data.reverse().map(candle => candle.trade_price);
+        return [...data].reverse().map(candle => candle.trade_price);
     } catch (error) {
         console.error(`Failed to fetch chart for ${market}:`, error);
         return [];

@@ -43,4 +43,13 @@ module.exports = function (app) {
             }
         })
     );
+    // 4. Upbit API
+    app.use(
+        '/api/upbit',
+        createProxyMiddleware({
+            target: 'https://api.upbit.com',
+            changeOrigin: true,
+            pathRewrite: { '^/api/upbit': '' }
+        })
+    );
 };
