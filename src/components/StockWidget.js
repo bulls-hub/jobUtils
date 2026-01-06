@@ -13,6 +13,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import { fetchStockData, searchStocks } from '../services/stockService';
+import { userSettingsService } from '../services/userSettingsService';
 
 const STORAGE_KEY = 'user_stocks';
 const DEFAULT_STOCKS = ['005930', '000660', '035420']; // 삼성전자, SK하이닉스, NAVER
@@ -50,7 +51,7 @@ const Sparkline = ({ data, color }) => {
     );
 };
 
-function StockWidget() {
+function StockWidget({ session }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -68,6 +69,11 @@ function StockWidget() {
     const [isSearching, setIsSearching] = useState(false);
 
     const loadData = useCallback(async (currentTickers) => {
+        if (!currentTickers || currentTickers.length === 0) {
+            setData({ indices: data?.indices || [], stocks: [] });
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             const result = await fetchStockData(currentTickers);
@@ -79,7 +85,35 @@ function StockWidget() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [data?.indices]);
+
+    // Supabase 연동 로직
+    useEffect(() => {
+        const syncSettings = async () => {
+            if (session) {
+                try {
+                    const settings = await userSettingsService.getSettings();
+                    if (settings && settings.stocks && settings.stocks.length > 0) {
+                        setTickers(settings.stocks);
+                    } else {
+                        // DB에 데이터가 없으면 로컬 데이터 마이그레이션
+                        const localStocks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                        if (localStocks.length > 0) {
+                            await userSettingsService.updateSettings({ stocks: localStocks });
+                            setTickers(localStocks);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to sync stock settings:', err);
+                }
+            } else {
+                // 비로그인 시 로컬 스토리지 사용
+                const saved = localStorage.getItem(STORAGE_KEY);
+                setTickers(saved ? JSON.parse(saved) : DEFAULT_STOCKS);
+            }
+        };
+        syncSettings();
+    }, [session]);
 
     useEffect(() => {
         loadData(tickers);
@@ -87,9 +121,17 @@ function StockWidget() {
         return () => clearInterval(timer);
     }, [tickers, loadData]);
 
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tickers));
-    }, [tickers]);
+    const saveTickers = async (newTickers) => {
+        setTickers(newTickers);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newTickers));
+        if (session) {
+            try {
+                await userSettingsService.updateSettings({ stocks: newTickers });
+            } catch (err) {
+                console.error('Failed to save stock settings to DB:', err);
+            }
+        }
+    };
 
     // 종목 검색 로직 (디바운스 필요하나 간단히 구현)
     useEffect(() => {
@@ -109,9 +151,8 @@ function StockWidget() {
     const handleAddStock = async (stock) => {
         if (!tickers.includes(stock.stockCode)) {
             const newTickers = [...tickers, stock.stockCode];
-            setTickers(newTickers);
-            // 즉시 데이터 로드하여 UX 개선
-            loadData(newTickers);
+            saveTickers(newTickers);
+            // loadData는 tickers 변화 감지로 자동 호출됨
         }
         setSearchQuery('');
         setSearchResults([]);
@@ -119,8 +160,8 @@ function StockWidget() {
 
     const handleRemoveStock = (ticker) => {
         const newTickers = tickers.filter(t => t !== ticker);
-        setTickers(newTickers);
-        // UI에서 즉시 제거
+        saveTickers(newTickers);
+        // UI에서 즉시 제거 (부드러운 UX를 위해)
         if (data && data.stocks) {
             setData({
                 ...data,

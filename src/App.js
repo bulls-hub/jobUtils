@@ -121,10 +121,10 @@ function App() {
               <Grid item xs={12}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
-                    <StockWidget />
+                    <StockWidget session={session} />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                    <CoinWidget />
+                    <CoinWidget session={session} />
                   </Grid>
                 </Grid>
               </Grid>

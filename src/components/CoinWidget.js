@@ -14,6 +14,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import CheckIcon from '@mui/icons-material/Check';
 import CurrencyBitcoinIcon from '@mui/icons-material/CurrencyBitcoin';
 import { fetchCoinData, fetchCoinChart, searchCoins, fetchMarketNames } from '../services/coinService';
+import { userSettingsService } from '../services/userSettingsService';
 
 const STORAGE_KEY_COIN = 'user_coins';
 const DEFAULT_COINS = ['KRW-BTC', 'KRW-ETH', 'KRW-XRP', 'KRW-SOL'];
@@ -51,7 +52,7 @@ const Sparkline = ({ data, color }) => {
     );
 };
 
-function CoinWidget() {
+function CoinWidget({ session }) {
     const [coins, setCoins] = useState([]);
     const [marketNames, setMarketNames] = useState({});
     const [loading, setLoading] = useState(true);
@@ -70,7 +71,7 @@ function CoinWidget() {
     const [isSearching, setIsSearching] = useState(false);
 
     const loadData = useCallback(async (currentMarkets, names = marketNames) => {
-        if (currentMarkets.length === 0) {
+        if (!currentMarkets || currentMarkets.length === 0) {
             setCoins([]);
             setLoading(false);
             return;
@@ -101,6 +102,34 @@ function CoinWidget() {
         }
     }, [marketNames]);
 
+    // Supabase 연동 로직
+    useEffect(() => {
+        const syncSettings = async () => {
+            if (session) {
+                try {
+                    const settings = await userSettingsService.getSettings();
+                    if (settings && settings.coins && settings.coins.length > 0) {
+                        setMarkets(settings.coins);
+                    } else {
+                        // DB에 데이터가 없으면 로컬 데이터 마이그레이션
+                        const localCoins = JSON.parse(localStorage.getItem(STORAGE_KEY_COIN) || '[]');
+                        if (localCoins.length > 0) {
+                            await userSettingsService.updateSettings({ coins: localCoins });
+                            setMarkets(localCoins);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Failed to sync coin settings:', err);
+                }
+            } else {
+                // 비로그인 시 로컬 스토리지 사용
+                const saved = localStorage.getItem(STORAGE_KEY_COIN);
+                setMarkets(saved ? JSON.parse(saved) : DEFAULT_COINS);
+            }
+        };
+        syncSettings();
+    }, [session]);
+
     // 데이터 로드 통합 (markets 변화 시 즉시 실행)
     useEffect(() => {
         const init = async () => {
@@ -117,9 +146,17 @@ function CoinWidget() {
         return () => clearInterval(timer);
     }, [markets, marketNames, loadData]);
 
-    useEffect(() => {
-        localStorage.setItem(STORAGE_KEY_COIN, JSON.stringify(markets));
-    }, [markets]);
+    const saveMarkets = async (newMarkets) => {
+        setMarkets(newMarkets);
+        localStorage.setItem(STORAGE_KEY_COIN, JSON.stringify(newMarkets));
+        if (session) {
+            try {
+                await userSettingsService.updateSettings({ coins: newMarkets });
+            } catch (err) {
+                console.error('Failed to save coin settings to DB:', err);
+            }
+        }
+    };
 
     // 코인 검색 로직
     useEffect(() => {
@@ -139,9 +176,7 @@ function CoinWidget() {
     const handleAddCoin = async (coin) => {
         if (!markets.includes(coin.market)) {
             const newMarkets = [...markets, coin.market];
-            setMarkets(newMarkets);
-            // 즉시 데이터 로드하여 UX 개선
-            loadData(newMarkets, marketNames);
+            saveMarkets(newMarkets);
         }
         setSearchQuery('');
         setSearchResults([]);
@@ -149,7 +184,7 @@ function CoinWidget() {
 
     const handleRemoveCoin = (market) => {
         const newMarkets = markets.filter(m => m !== market);
-        setMarkets(newMarkets);
+        saveMarkets(newMarkets);
         // UI에서 즉시 제거
         setCoins(prev => prev.filter(c => c.market !== market));
     };
