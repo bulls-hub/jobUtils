@@ -8,9 +8,7 @@ import {
   Typography,
   Box,
   Grid,
-  Chip,
   IconButton,
-  Tooltip,
   Divider,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -101,13 +99,6 @@ const LottoGeneratorModal = ({ open, onClose }) => {
     setSelectedNumbers([]);
     setGeneratedSets([]);
   };
-
-  useEffect(() => {
-    if (!open) {
-      // Keep state or reset? Usually, keeping it until explicit reset is better UX if they just closed by mistake.
-      // But for a "generator", resetting on close might be expected. Let's keep it for now.
-    }
-  }, [open]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">

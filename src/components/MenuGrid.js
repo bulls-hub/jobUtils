@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Grid, Card, Typography, CardActionArea } from '@mui/material';
-import CalculateIcon from '@mui/icons-material/Calculate';
 import NoteIcon from '@mui/icons-material/Note';
 import TransformIcon from '@mui/icons-material/Transform';
 import CasinoIcon from '@mui/icons-material/Casino';

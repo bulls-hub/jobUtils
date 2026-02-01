@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
     Card, CardContent, Typography, Box, Grid, Divider, Skeleton,
-    IconButton, TextField, Autocomplete, CircularProgress, Tooltip,
+    IconButton, TextField, Autocomplete, CircularProgress,
     InputAdornment
 } from '@mui/material';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -10,7 +10,6 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import SearchIcon from '@mui/icons-material/Search';
-import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
 import { fetchStockData, searchStocks } from '../services/stockService';
 import { userSettingsService } from '../services/userSettingsService';
@@ -314,7 +313,6 @@ function StockWidget({ session }) {
                                     <Typography variant="caption" color="text.secondary">{stock.ticker}</Typography>
                                 </Box>
 
-                                {/* 스파크라인 */}
                                 {!isEditMode && (
                                     <Box sx={{ px: 1 }}>
                                         <Sparkline
