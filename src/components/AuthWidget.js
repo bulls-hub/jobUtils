@@ -18,13 +18,13 @@ export default function AuthWidget({ session }) {
 
     const handleLogin = async () => {
         try {
-            // Vercel 배포 환경과 로컬 환경에 따른 리다이렉트 처리
-            const origin = window.location.origin;
+            // 현재 URL(해시 포함)을 리다이렉트 주소로 설정하여 로그인 전 페이지 유지
+            const currentUrl = window.location.href;
             
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: origin,
+                    redirectTo: currentUrl,
                     queryParams: {
                         access_type: 'offline',
                         prompt: 'select_account',

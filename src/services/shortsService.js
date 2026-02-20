@@ -1,12 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../lib/supabaseClient';
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-const geminiApiKey = process.env.REACT_APP_GEMINI_API_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-const genAI = new GoogleGenerativeAI(geminiApiKey);
 
 export const shortsService = {
   async getShorts() {
@@ -20,6 +13,14 @@ export const shortsService = {
   },
 
   async createShorts(topic) {
+    const geminiApiKey = process.env.REACT_APP_GEMINI_API_KEY;
+    
+    if (!geminiApiKey) {
+      console.error('Environment variables:', process.env);
+      throw new Error('Gemini API Key is missing (REACT_APP_GEMINI_API_KEY). Please ensure it is set in your .env file and you have restarted the development server.');
+    }
+
+    const genAI = new GoogleGenerativeAI(geminiApiKey);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('User not authenticated');
 
@@ -29,7 +30,7 @@ export const shortsService = {
     const prompt = `
       You are a professional YouTube Shorts creator. 
       Based on the topic: "${topic}", please generate:
-      1. A viral script (under 60 seconds, engaging hook).
+      1. A viral script (under 60 seconds, engaging hook, in Korean).
       2. A detailed video generation prompt (in English) for AI video tools like Runway or Pika.
       3. 5-7 trending hashtags to maximize exposure.
       
@@ -41,31 +42,36 @@ export const shortsService = {
       }
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    
-    // JSON 추출 (Markdown backticks 제거용)
-    const jsonStr = text.replace(/```json|```/g, '').trim();
-    const generatedData = JSON.parse(jsonStr);
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // JSON 추출 (Markdown backticks 제거용)
+      const jsonStr = text.replace(/```json|```/g, '').trim();
+      const generatedData = JSON.parse(jsonStr);
 
-    // 2. DB에 저장
-    const { data, error } = await supabase
-      .from('shorts_contents')
-      .insert([
-        {
-          user_id: user.id,
-          topic,
-          script: generatedData.script,
-          video_prompt: generatedData.video_prompt,
-          hashtags: generatedData.hashtags,
-          status: 'pending'
-        }
-      ])
-      .select();
+      // 2. DB에 저장
+      const { data, error } = await supabase
+        .from('shorts_contents')
+        .insert([
+          {
+            user_id: user.id,
+            topic,
+            script: generatedData.script,
+            video_prompt: generatedData.video_prompt,
+            hashtags: generatedData.hashtags,
+            status: 'pending'
+          }
+        ])
+        .select();
 
-    if (error) throw error;
-    return data[0];
+      if (error) throw error;
+      return data[0];
+    } catch (apiError) {
+      console.error('Gemini API Error:', apiError);
+      throw new Error('Gemini AI 응답 생성 중 오류가 발생했습니다: ' + apiError.message);
+    }
   },
 
   async updateShortsStatus(id, status, videoUrl = null) {

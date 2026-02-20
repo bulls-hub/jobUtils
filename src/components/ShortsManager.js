@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -19,8 +19,7 @@ import {
   Card,
   CardContent,
   CardActions,
-  Link,
-  useTheme
+  Link
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,7 +32,6 @@ import {
 import { shortsService } from '../services/shortsService';
 
 const ShortsManager = () => {
-  const theme = useTheme();
   const [shortsList, setShortsList] = useState([]);
   const [selectedShorts, setSelectedShorts] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,11 +39,7 @@ const ShortsManager = () => {
   const [topic, setTopic] = useState('');
   const [creating, setCreating] = useState(false);
 
-  useEffect(() => {
-    fetchShorts();
-  }, []);
-
-  const fetchShorts = async () => {
+  const fetchShorts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await shortsService.getShorts();
@@ -58,14 +52,19 @@ const ShortsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedShorts]);
+
+  useEffect(() => {
+    fetchShorts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 초기 로드 시 한 번만 실행
 
   const handleCreate = async () => {
     if (!topic.trim()) return;
     try {
       setCreating(true);
       const newShorts = await shortsService.createShorts(topic);
-      setShortsList([newShorts, ...shortsList]);
+      setShortsList(prev => [newShorts, ...prev]);
       setSelectedShorts(newShorts);
       setIsModalOpen(false);
       setTopic('');
@@ -82,7 +81,7 @@ const ShortsManager = () => {
     if (!window.confirm('정말 삭제하시겠습니까?')) return;
     try {
       await shortsService.deleteShorts(id);
-      setShortsList(shortsList.filter(s => s.id !== id));
+      setShortsList(prev => prev.filter(s => s.id !== id));
       if (selectedShorts?.id === id) {
         setSelectedShorts(null);
       }
@@ -166,7 +165,7 @@ const ShortsManager = () => {
                   <CopyIcon fontSize="small" />
                 </IconButton>
               </Typography>
-              <Paper sx={{ p: 2, bgcolor: '#f0f4f8', color: '#1a3e59', fontStyle: 'italic' }}>
+              <Paper sx={{ p: 2, bgcolor: 'action.hover', color: 'text.primary', fontStyle: 'italic' }}>
                 {selectedShorts.video_prompt}
               </Paper>
 
@@ -174,7 +173,7 @@ const ShortsManager = () => {
                 🏷️ 추천 해시태그
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {selectedShorts.hashtags.split(' ').map((tag, i) => (
+                {selectedShorts.hashtags?.split(' ').map((tag, i) => (
                   <Chip key={i} label={tag} size="small" variant="outlined" />
                 ))}
               </Box>
