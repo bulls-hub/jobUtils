@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { Grid, Card, Typography, CardActionArea } from '@mui/material';
-import NoteIcon from '@mui/icons-material/Note';
+import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import TransformIcon from '@mui/icons-material/Transform';
 import CasinoIcon from '@mui/icons-material/Casino';
 import LottoGeneratorModal from './LottoGeneratorModal';
 
-function MenuGrid() {
+function MenuGrid({ onShortsClick }) {
   const [lottoOpen, setLottoOpen] = useState(false);
 
   const menus = [
     { id: 1, title: '로또 번호 생성', icon: <CasinoIcon fontSize="large" />, action: () => setLottoOpen(true) },
-    { id: 2, title: '기능 2: 메모', icon: <NoteIcon fontSize="large" />, action: () => alert('기능 2 클릭됨') },
+    { id: 2, title: '쇼츠 제작 관리', icon: <VideoLibraryIcon fontSize="large" />, action: onShortsClick },
     { id: 3, title: '기능 3: 파일 변환', icon: <TransformIcon fontSize="large" />, action: () => alert('기능 3 클릭됨') },
   ];
 
