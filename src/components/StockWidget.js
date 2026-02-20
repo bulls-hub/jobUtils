@@ -313,7 +313,6 @@ function StockWidget({ session }) {
                                     <Typography variant="caption" color="text.secondary">{stock.ticker}</Typography>
                                 </Box>
 
-                                {/* 스파크라인 */}
                                 {!isEditMode && (
                                     <Box sx={{ px: 1 }}>
                                         <Sparkline

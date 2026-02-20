@@ -18,16 +18,22 @@ export default function AuthWidget({ session }) {
 
     const handleLogin = async () => {
         try {
+            // 현재 URL(해시 포함)을 리다이렉트 주소로 설정하여 로그인 전 페이지 유지
+            const currentUrl = window.location.href;
+            
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.hostname === 'localhost' 
-                        ? window.location.origin 
-                        : (process.env.REACT_APP_AUTH_REDIRECT_URI || window.location.origin)
+                    redirectTo: currentUrl,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'select_account',
+                    },
                 }
             });
             if (error) throw error;
         } catch (error) {
+            console.error('Login error:', error);
             alert('로그인 중 오류가 발생했습니다: ' + error.message);
         }
     };
@@ -41,19 +47,24 @@ export default function AuthWidget({ session }) {
         return (
             <Button
                 variant="contained"
-                color="secondary" // 조금 더 눈에 띄게
+                color="secondary"
                 startIcon={<GoogleIcon />}
                 onClick={handleLogin}
-                sx={{ textTransform: 'none', fontWeight: 'bold' }}
+                sx={{ 
+                    textTransform: 'none', 
+                    fontWeight: 'bold',
+                    boxShadow: 2,
+                    '&:hover': { boxShadow: 4 }
+                }}
             >
-                Login with Google
+                Google Login
             </Button>
         );
     }
 
     const { user } = session;
-    const displayName = user.user_metadata.full_name || user.email;
-    const avatarUrl = user.user_metadata.avatar_url;
+    const displayName = user.user_metadata?.full_name || user.email;
+    const avatarUrl = user.user_metadata?.avatar_url;
 
     return (
         <Box>
@@ -71,7 +82,7 @@ export default function AuthWidget({ session }) {
                 id="menu-appbar-auth"
                 anchorEl={anchorEl}
                 anchorOrigin={{
-                    vertical: 'top',
+                    vertical: 'bottom',
                     horizontal: 'right',
                 }}
                 keepMounted
@@ -83,7 +94,7 @@ export default function AuthWidget({ session }) {
                 onClose={handleClose}
             >
                 <MenuItem disabled>
-                    <Typography variant="caption">{user.email}</Typography>
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>{user.email}</Typography>
                 </MenuItem>
                 <MenuItem onClick={handleLogout}>로그아웃</MenuItem>
             </Menu>

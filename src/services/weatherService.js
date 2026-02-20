@@ -78,9 +78,9 @@ const getDayName = (date) => {
     // 우선 요일로 반환. 필요시 수정.
 
     // 간단한 상대 날짜 로직
-    const today = new Date();
-    const diffTime = Math.abs(date - today);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // const today = new Date();
+    // const diffTime = Math.abs(date - today);
+    // const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     // 정확한 날짜 차이 계산이 필요하지만(자정 기준), 여기서는 생략하고 요일 리턴
     return days[date.getDay()];

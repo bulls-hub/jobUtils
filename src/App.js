@@ -13,6 +13,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import TimeWidget from './components/TimeWidget';
 import WeatherWidget from './components/WeatherWidget';
 import DDayWidget from './components/DDayWidget';
@@ -20,6 +21,7 @@ import MenuGrid from './components/MenuGrid';
 import AuthWidget from './components/AuthWidget';
 import StockWidget from './components/StockWidget';
 import CoinWidget from './components/CoinWidget';
+import ShortsManager from './components/ShortsManager';
 import getTheme from './theme';
 import { supabase } from './lib/supabaseClient';
 
@@ -27,6 +29,7 @@ function App() {
   const [mode, setMode] = useState('dark');
   const [anchorEl, setAnchorEl] = useState(null);
   const [session, setSession] = useState(null);
+  const [activeView, setActiveView] = useState('home'); // 'home' or 'shorts'
 
   const theme = useMemo(() => getTheme(mode), [mode]);
 
@@ -56,13 +59,26 @@ function App() {
     setMode(event.target.checked ? 'dark' : 'light');
   };
 
+  const navigateToShorts = () => {
+    setActiveView('shorts');
+  };
+
+  const navigateToHome = () => {
+    setActiveView('home');
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AppBar position="static" color="transparent" elevation={0} sx={{ mb: 4, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
         <Toolbar>
+          {activeView !== 'home' && (
+            <IconButton edge="start" color="inherit" onClick={navigateToHome} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+          )}
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
-            JobUtils Hub
+            JobUtils Hub {activeView === 'shorts' && '- Shorts Manager'}
           </Typography>
           <AuthWidget session={session} />
           <div>
@@ -109,34 +125,38 @@ function App() {
         </Toolbar>
       </AppBar>
       <Container maxWidth="lg">
-        <Grid container spacing={4} alignItems="flex-start">
-          <Grid item xs={12} md={4}>
-            <TimeWidget />
-            <Box sx={{ mt: 2 }}>
-              <WeatherWidget />
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={8}>
-            <Grid container spacing={4}>
-              <Grid item xs={12}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
-                    <StockWidget session={session} />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <CoinWidget session={session} />
+        {activeView === 'home' ? (
+          <Grid container spacing={4} alignItems="flex-start">
+            <Grid item xs={12} md={4}>
+              <TimeWidget />
+              <Box sx={{ mt: 2 }}>
+                <WeatherWidget />
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={8}>
+              <Grid container spacing={4}>
+                <Grid item xs={12}>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <StockWidget session={session} />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <CoinWidget session={session} />
+                    </Grid>
                   </Grid>
                 </Grid>
-              </Grid>
-              <Grid item xs={12}>
-                <DDayWidget session={session} />
+                <Grid item xs={12}>
+                  <DDayWidget session={session} />
+                </Grid>
               </Grid>
             </Grid>
+            <Grid item xs={12}>
+              <MenuGrid onShortsClick={navigateToShorts} />
+            </Grid>
           </Grid>
-          <Grid item xs={12}>
-            <MenuGrid />
-          </Grid>
-        </Grid>
+        ) : (
+          <ShortsManager />
+        )}
       </Container>
     </ThemeProvider>
   );
